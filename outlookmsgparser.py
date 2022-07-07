@@ -45,7 +45,7 @@ class OutlookMsgParser:
 
     def save_eml(self):
         email_path = os.path.join(self._case_directory, "email.eml")
-        with open(email_path, encoding="utf-8", mode="wb") as email_file:
+        with open(email_path, mode="wb") as email_file:
             email_file.write(self._emailMessage.as_bytes())
         self._print(f"[i] Email in the eml format saved to: {email_path}")
 
@@ -63,7 +63,7 @@ class OutlookMsgParser:
                 self._print(f"[i] Saving txt payload {payload_raw_filename}")
                 payload_raw_filehandler.write(payload.as_string() if isinstance(payload, email.message.EmailMessage) else payload)
 
-            with open(payload_decoded_filename, encoding="utf-8", mode="wb") as payload_decoded_filehandler:
+            with open(payload_decoded_filename, mode="wb") as payload_decoded_filehandler:
                 content = payload.get_content().encode("utf-8") if isinstance(payload.get_content(), str) else payload.get_content()
                 payload_decoded_filehandler.write(content)
 
