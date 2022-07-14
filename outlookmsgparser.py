@@ -56,7 +56,6 @@ class OutlookMsgParser:
             payloads = [payloads]
         self._print(f"[i] Detected payloads: {len(payloads)}")
         for payload_no, payload in enumerate(payloads):
-            payload_raw_filename = os.path.join(self._case_directory, f"payload_{payload_no}_raw.txt")
             # do we have simple, string payload (not an attachment)?
             # if so, we do not have filename, let's save this just as .txt file
             # plus we can try to quote-printable decode this
@@ -68,9 +67,11 @@ class OutlookMsgParser:
                 with open(payload_quoted_printable_filename, mode="wb") as filehandler:
                     filehandler.write(quopri.decodestring(payload))
             else:
-                payload_attachment_filename = payload.get_filename()
+                payload_attachment_filename = payload.get_filename() if payload.get_filename() is not None else "NOFILENAME"
                 payload_raw_filename = os.path.join(self._case_directory, f"payload_{payload_no}_raw__{payload_attachment_filename}.txt")
                 payload_decoded_filename = os.path.join(self._case_directory, f"payload_{payload_no}_decoded__{payload_attachment_filename}")
+                if payload_attachment_filename == "NOFILENAME":
+                    payload_decoded_filename += ".txt"
 
                 with open(payload_raw_filename, encoding="utf-8", mode="w") as payload_raw_filehandler:
                     self._print(f"[i] Saving txt payload {payload_raw_filename}")
@@ -78,7 +79,12 @@ class OutlookMsgParser:
 
                 with open(payload_decoded_filename, encoding="utf-8", mode="w") as payload_decoded_filehandler:
                     self._print(f"[i] Saving txt payload {payload_raw_filename}")
-                    payload_decoded_filehandler.write(payload.get_payload())
+                    for ph in payload._headers:
+                        if ph == ('Content-Transfer-Encoding', 'quoted-printable'):
+                            payload_decoded_filehandler.write(quopri.decodestring(payload.get_payload()).decode("utf-8"))
+                            file_has_been_saved = True
+                    if not file_has_been_saved:
+                        payload_decoded_filehandler.write(payload.get_payload())
 
     def print_headers(self):
         headers_print_string = "[i] Printing email headers:\r\n"
